@@ -1,16 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../../services/api";
-import Card from "../../components/Card";
-import Badge from "../../components/Badge";
-import Button from "../../components/Button";
-import Input from "../../components/Input";
-import Icon from "../../components/Icon";
+import { Icon, StatusBadge, errorMessage } from "./BooksUi";
+import "./books.css";
 
 export default function BookCatalog() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const search = params.get("search") || ""; // URL is the single source of truth (topbar search uses it too)
+  const search = params.get("search") || ""; // kept in the URL so a search can be linked to
 
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,10 +20,10 @@ export default function BookCatalog() {
       api
         .get("/books", { params: { search } })
         .then((res) => {
-          setBooks(res.data);
+          setBooks(res.data.data);
           setError("");
         })
-        .catch(() => setError("Could not load books. Is the server running?"))
+        .catch((err) => setError(errorMessage(err, "Could not load books.")))
         .finally(() => setLoading(false));
     }, 300);
     return () => clearTimeout(timer); // typing again cancels the pending call
@@ -40,72 +37,80 @@ export default function BookCatalog() {
   const availableCount = books.filter((b) => b.status === "available").length;
 
   return (
-    <div>
-      <div className="page-header">
-        <div className="eyebrow">
-          Library Hub <span className="eyebrow__sub">• Reference books</span>
+    <div className="bk-page">
+      <div className="bk-header">
+        <div className="bk-eyebrow">
+          Library Hub <span className="bk-eyebrow__sub">• Reference books</span>
         </div>
         <h1>Library Catalog</h1>
-        <p className="muted">Search reference books and reserve a pickup date.</p>
+        <p className="bk-muted">Search reference books and reserve a pickup date.</p>
+        <button type="button" className="bk-link" onClick={() => navigate("/books/my-reservations")}>
+          <Icon name="bookmark" size={16} /> My reservations
+        </button>
       </div>
 
-      <Input
-        size="lg"
-        icon="search"
-        placeholder="Search by title or author..."
-        value={search}
-        onChange={onType}
-        autoFocus
-      />
+      <div className="bk-search">
+        <Icon name="search" />
+        <input
+          className="bk-input bk-input--lg"
+          placeholder="Search by title or author..."
+          value={search}
+          onChange={onType}
+          aria-label="Search books"
+          autoFocus
+        />
+      </div>
 
-      <div className="toolbar">
-        <span className="muted">
-          {loading ? "Searching..." : `${books.length} book${books.length === 1 ? "" : "s"} · ${availableCount} available`}
+      <div className="bk-toolbar">
+        <span className="bk-muted">
+          {loading
+            ? "Searching..."
+            : `${books.length} book${books.length === 1 ? "" : "s"} · ${availableCount} available`}
         </span>
       </div>
 
       {error && (
-        <div className="alert alert--error">
+        <div className="bk-alert bk-alert--error" role="alert">
           <Icon name="error" /> {error}
         </div>
       )}
 
       {!loading && !error && books.length === 0 && (
-        <Card className="empty-state">
+        <div className="bk-card bk-empty">
           <Icon name="search_off" />
           <h3>No books found</h3>
           <p>Try a different title or author.</p>
-        </Card>
+        </div>
       )}
 
-      <div className="card-grid">
+      <div className="bk-grid">
         {books.map((b) => (
-          <Card key={b.id} interactive className="resource-card">
-            <div className="resource-card__top">
-              <div className="icon-tile">
+          <div key={b.id} className="bk-card bk-card--interactive bk-resource">
+            <div className="bk-resource__top">
+              <div className="bk-tile">
                 <Icon name="menu_book" size={26} />
               </div>
-              <Badge status={b.status} />
+              <StatusBadge status={b.status} />
             </div>
             <div>
-              <div className="code-tag">ISBN {b.isbn}</div>
-              <h3 className="resource-card__title">{b.title}</h3>
-              <p className="muted">{b.author}</p>
+              <div className="bk-code">ISBN {b.isbn}</div>
+              <h3 className="bk-resource__title">{b.title}</h3>
+              <p className="bk-muted">{b.author}</p>
             </div>
-            <div className="resource-card__footer">
-              <span className="meta">
+            <div className="bk-resource__footer">
+              <span className="bk-meta">
                 {b.status === "available" ? "Ready to reserve" : "Currently reserved"}
               </span>
-              <Button
-                size="sm"
-                icon="bookmark_add"
+              <button
+                type="button"
+                className="bk-btn bk-btn--primary bk-btn--sm"
                 disabled={b.status !== "available"}
-                onClick={() => navigate(`/reserve/${b.id}`)}
+                onClick={() => navigate(`/books/${b.id}/reserve`)}
               >
-                Reserve
-              </Button>
+                <Icon name="bookmark_add" /> Reserve
+              </button>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
     </div>

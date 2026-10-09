@@ -1,13 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../services/api";
-import Card from "../../components/Card";
-import Badge from "../../components/Badge";
-import Button from "../../components/Button";
-import Input from "../../components/Input";
-import Icon from "../../components/Icon";
-
-const TEMP_USER_ID = 1; // TODO: replace with the logged-in user's id (Person 1)
+import { Icon, StatusBadge, errorMessage } from "./BooksUi";
+import "./books.css";
 
 export default function ReserveBook() {
   const { id } = useParams();
@@ -22,104 +17,116 @@ export default function ReserveBook() {
   useEffect(() => {
     api
       .get("/books")
-      .then((res) => setBook(res.data.find((b) => String(b.id) === id) || false))
-      .catch(() => setError("Could not load book. Is the server running?"));
+      .then((res) => setBook(res.data.data.find((b) => String(b.id) === id) || false))
+      .catch((err) => setError(errorMessage(err, "Could not load the book.")));
   }, [id]);
 
   const submit = () => {
     if (!date) return setError("Please choose a pickup date.");
     setSubmitting(true);
     setError("");
+    // The server knows who you are from your login token, so no user id is sent.
     api
-      .post("/books/reserve", { user_id: TEMP_USER_ID, book_id: Number(id), pickup_date: date })
-      .then(() => navigate("/my-reservations"))
-      .catch((err) => setError(err.response?.data?.error || "Reservation failed."))
+      .post("/books/reserve", { book_id: Number(id), pickup_date: date })
+      .then(() => navigate("/books/my-reservations"))
+      .catch((err) => setError(errorMessage(err, "Reservation failed.")))
       .finally(() => setSubmitting(false));
   };
 
   const back = (
-    <button type="button" className="link" onClick={() => navigate("/books")}>
+    <button type="button" className="bk-link" onClick={() => navigate("/books")}>
       <Icon name="arrow_back" size={16} /> Back to catalog
     </button>
   );
 
-  if (book === null && !error) return <p className="muted">Loading...</p>;
-  if (book === false)
+  if (book === null && !error) {
+    return <div className="bk-page"><p className="bk-muted">Loading...</p></div>;
+  }
+
+  if (book === false) {
     return (
-      <div>
+      <div className="bk-page">
         {back}
-        <Card className="empty-state" style={{ marginTop: 16 }}>
+        <div className="bk-card bk-empty" style={{ marginTop: 16 }}>
           <Icon name="search_off" />
           <h3>Book not found</h3>
-        </Card>
+        </div>
       </div>
     );
+  }
 
   return (
-    <div>
-      <div className="page-header">
+    <div className="bk-page">
+      <div className="bk-header">
         {back}
-        <div className="eyebrow" style={{ marginTop: 16 }}>Library Hub</div>
+        <div className="bk-eyebrow" style={{ marginTop: 16 }}>Library Hub</div>
         <h1>Reserve a Book</h1>
-        <p className="muted">Choose a pickup date to hold this book for you.</p>
+        <p className="bk-muted">Choose a pickup date to hold this book for you.</p>
       </div>
 
       {error && (
-        <div className="alert alert--error">
+        <div className="bk-alert bk-alert--error" role="alert">
           <Icon name="error" /> {error}
         </div>
       )}
 
       {book && (
-        <div className="split">
-          <Card>
-            <div className="row-card__main" style={{ marginBottom: 16 }}>
-              <div className="icon-tile">
+        <div className="bk-split">
+          <div className="bk-card">
+            <div className="bk-row__main" style={{ marginBottom: 16 }}>
+              <div className="bk-tile">
                 <Icon name="menu_book" size={26} />
               </div>
               <div>
-                <div className="code-tag">ISBN {book.isbn}</div>
+                <div className="bk-code">ISBN {book.isbn}</div>
                 <h2>{book.title}</h2>
-                <p className="muted">{book.author}</p>
+                <p className="bk-muted">{book.author}</p>
               </div>
             </div>
-            <dl className="detail-list">
+            <dl className="bk-details">
               <div><dt>Author</dt><dd>{book.author}</dd></div>
               <div><dt>ISBN</dt><dd>{book.isbn}</dd></div>
-              <div><dt>Availability</dt><dd><Badge status={book.status} /></dd></div>
+              <div><dt>Availability</dt><dd><StatusBadge status={book.status} /></dd></div>
             </dl>
-          </Card>
+          </div>
 
-          <Card>
-            <div className="card__head">
-              <div className="card__head-title">
-                <Icon name="event_available" />
-                <h2>Pickup</h2>
-              </div>
+          <div className="bk-card">
+            <div className="bk-card__head">
+              <Icon name="event_available" />
+              <h2>Pickup</h2>
             </div>
-            <label className="field-label" htmlFor="pickup">Pickup date</label>
-            <Input
+            <label className="bk-label" htmlFor="pickup">Pickup date</label>
+            <input
               id="pickup"
               type="date"
-              icon="calendar_month"
+              className="bk-input"
               min={today}
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />
-            <p className="field-hint">Choose the day you'll collect this book.</p>
+            <p className="bk-hint">Choose the day you'll collect this book.</p>
 
-            <div className="stack" style={{ marginTop: 24 }}>
-              <Button block icon="check_circle" onClick={submit} disabled={submitting || book.status !== "available"}>
-                {submitting ? "Reserving..." : "Confirm reservation"}
-              </Button>
-              <Button block variant="outline" onClick={() => navigate("/books")}>
+            <div className="bk-stack" style={{ marginTop: 24 }}>
+              <button
+                type="button"
+                className="bk-btn bk-btn--primary bk-btn--block"
+                onClick={submit}
+                disabled={submitting || book.status !== "available"}
+              >
+                <Icon name="check_circle" /> {submitting ? "Reserving..." : "Confirm reservation"}
+              </button>
+              <button
+                type="button"
+                className="bk-btn bk-btn--outline bk-btn--block"
+                onClick={() => navigate("/books")}
+              >
                 Cancel
-              </Button>
+              </button>
             </div>
             {book.status !== "available" && (
-              <p className="field-hint">This book is currently reserved by someone else.</p>
+              <p className="bk-hint">This book is currently reserved by someone else.</p>
             )}
-          </Card>
+          </div>
         </div>
       )}
     </div>

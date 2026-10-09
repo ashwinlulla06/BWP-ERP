@@ -1,7 +1,14 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import "./styles.css";
 import App from "./App";
-import "./styles/global.css"; // shared theme, import once
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App />);
+
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
