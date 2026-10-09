@@ -122,7 +122,7 @@ function Profile() {
 
             <div className="notice-card mt-4">
               <span className="notice-icon" aria-hidden="true">✓</span>
-              <div><strong>Account security</strong><p>Your password is never stored in browser storage by this mock frontend.</p></div>
+              <div><strong>Account security</strong><p>Your password is never stored in browser storage.</p></div>
             </div>
           </div>
         </div>
