@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog>
+  <book><title>Developing Web Applications</title><author>Ralph Moseley</author><isbn>978-0-00-000001-1</isbn><status>available</status></book>
+  <book><title>HTML 5 Black Book</title><author>DreamTech Press</author><isbn>978-0-00-000002-2</isbn><status>available</status></book>
+  <book><title>Developing Web Applications in PHP and AJAX</title><author>Harwani</author><isbn>978-0-00-000003-3</isbn><status>available</status></book>
+  <book><title>Internet and World Wide Web How to Program</title><author>Paul Deitel</author><isbn>978-0-00-000004-4</isbn><status>available</status></book>
+  <book><title>Java How to Program</title><author>Paul Deitel</author><isbn>978-0-00-000005-5</isbn><status>available</status></book>
+  <book><title>C How to Program</title><author>Paul Deitel</author><isbn>978-0-00-000006-6</isbn><status>available</status></book>
+  <book><title>Web Technologies</title><author>Atul Kahate</author><isbn>978-0-00-000007-7</isbn><status>available</status></book>
+  <book><title>Cryptography and Network Security</title><author>Atul Kahate</author><isbn>978-0-00-000008-8</isbn><status>available</status></book>
+  <book><title>An Introduction to XML and Web Services</title><author>Anders Moller</author><isbn>978-0-00-000009-9</isbn><status>available</status></book>
+  <book><title>Learning XML</title><author>Erik Ray</author><isbn>978-0-00-000010-0</isbn><status>available</status></book>
+</catalog>
