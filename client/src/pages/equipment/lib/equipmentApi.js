@@ -1,11 +1,11 @@
 import * as mock from './mockData';
  
-const env = typeof process !== 'undefined' && process.env ? process.env : {};
- 
-export const API_ROOT = env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// NOTE: Create React App only substitutes the literal text process.env.REACT_APP_*,
+// so these must not be read through an alias.
+export const API_ROOT = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 // Mock data is ON by default until the backend is ready.
 // Set REACT_APP_USE_MOCK=false in client/.env to use the real API.
-export const USE_MOCK = env.REACT_APP_USE_MOCK !== 'false';
+export const USE_MOCK = process.env.REACT_APP_USE_MOCK !== 'false';
  
 function httpError(message, status) {
   const err = new Error(message);
@@ -28,7 +28,6 @@ function request(method, path, body) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open(method, API_ROOT + path, true);
-    xhr.withCredentials = true; // send session cookie if Person 1 uses sessions
     xhr.timeout = 10000;
     xhr.setRequestHeader('Accept', 'application/json');
     const token = readToken(); // same Bearer token Person 1's axios interceptor sends
