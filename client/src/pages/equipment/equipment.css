@@ -93,11 +93,9 @@
  
 /* ---------- Page frame ---------- */
 .eq-page {
-  max-width: 1180px;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 2rem;
-  background: var(--eq-bg);
-  min-height: 100%;
+  padding: 2rem 0.75rem;
 }
  
 .eq-header {
@@ -271,6 +269,18 @@
   cursor: pointer;
   text-decoration: underline;
 }
+ 
+/* The app's global styles.css sets a:hover { color: navy }, which would make
+   link-styled buttons unreadable on hover. These selectors are more specific. */
+.eq-scope a.eq-btn { font-weight: 600; text-decoration: none; }
+.eq-scope a.eq-btn--primary,
+.eq-scope a.eq-btn--primary:hover { color: #fff; }
+.eq-scope a.eq-btn--secondary,
+.eq-scope a.eq-btn--secondary:hover { color: var(--eq-primary); }
+.eq-scope a.eq-btn--danger,
+.eq-scope a.eq-btn--danger:hover { color: #fff; }
+.eq-scope .eq-breadcrumb a,
+.eq-scope .eq-breadcrumb a:hover { color: var(--eq-secondary); }
  
 /* ---------- Badges ---------- */
 .eq-badge {
@@ -1030,101 +1040,6 @@
   to { transform: translateY(0); opacity: 1; }
 }
  
-/* ---------- Temporary shell (sidebar) ---------- */
-.eq-shell {
-  display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-  min-height: 100vh;
-  background: var(--eq-bg);
-}
-.eq-sidebar {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding: 1.25rem 1rem;
-  background: #fff;
-  border-right: 1px solid var(--eq-border);
-}
-.eq-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 8px;
-}
-.eq-brand__mark {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--eq-primary);
-  color: #fff;
-}
-.eq-brand__name {
-  display: block;
-  font-family: var(--eq-font-head);
-  font-size: 18px;
-  line-height: 20px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--eq-primary);
-}
-.eq-brand__sub {
-  display: block;
-  font-size: 11px;
-  line-height: 14px;
-  font-weight: 600;
-  color: var(--eq-muted);
-}
-.eq-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-}
-.eq-nav__link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  height: 40px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--eq-muted);
-  font-size: 14px;
-  font-weight: 500;
-  text-decoration: none;
-  cursor: pointer;
-  text-align: left;
-}
-.eq-nav__link:hover {
-  background: var(--eq-bg);
-}
-.eq-nav__link.is-active {
-  background: var(--eq-secondary-soft);
-  color: var(--eq-secondary);
-  font-weight: 600;
-}
-.eq-nav__link--logout {
-  color: var(--eq-red);
-  background: var(--eq-red-bg);
-  font-weight: 600;
-}
-.eq-nav__link--logout:hover {
-  background: var(--eq-red-border);
-}
-.eq-main {
-  min-width: 0;
-}
-.eq-main .eq-page {
-  max-width: 1180px;
-}
- 
 /* ---------- Responsive ---------- */
 @media (max-width: 1100px) {
   .eq-book-layout {
@@ -1137,8 +1052,7 @@
  
 @media (max-width: 767px) {
   .eq-page {
-    padding: 1rem;
-    padding-bottom: 5.5rem;
+    padding: 1.25rem 0.75rem;
   }
   .eq-title {
     font-size: 24px;
@@ -1159,40 +1073,6 @@
   }
   .eq-slot-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
- 
-  /* Sidebar becomes a bottom bar, as the design system specifies */
-  .eq-shell {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .eq-sidebar {
-    position: fixed;
-    top: auto;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 40;
-    height: auto;
-    flex-direction: row;
-    align-items: center;
-    padding: 6px 8px;
-    border-right: 0;
-    border-top: 1px solid var(--eq-border);
-  }
-  .eq-brand,
-  .eq-nav__link--logout {
-    display: none;
-  }
-  .eq-nav {
-    flex-direction: row;
-    justify-content: space-around;
-  }
-  .eq-nav__link {
-    flex-direction: column;
-    gap: 2px;
-    height: 52px;
-    padding: 0 8px;
-    font-size: 11px;
   }
 }
  

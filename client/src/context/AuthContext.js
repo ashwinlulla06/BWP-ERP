@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import {
+  getCurrentUser,
   getStoredUser,
   loginUser,
   logoutUser,
@@ -14,8 +15,17 @@ export function AuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setUser(getStoredUser());
-    setIsLoading(false);
+    const storedUser = getStoredUser();
+    if (!storedUser) {
+      setIsLoading(false);
+      return;
+    }
+
+    setUser(storedUser);
+    getCurrentUser()
+      .then(setUser)
+      .catch(() => setUser(null))
+      .finally(() => setIsLoading(false));
   }, []);
 
   const login = async (credentials) => {
