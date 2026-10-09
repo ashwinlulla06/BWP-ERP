@@ -57,7 +57,7 @@ function Register() {
               <h1>Create your UniReserve account</h1>
               <p>Register as a student or faculty member to manage university resources.</p>
             </div>
-            <span className="security-chip"><span className="status-dot" /> Secure mock registration</span>
+            <span className="security-chip"><span className="status-dot" /> Secure registration</span>
           </div>
 
           {error && <div className="alert alert-danger" role="alert">{error}</div>}

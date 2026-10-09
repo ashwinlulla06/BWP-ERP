@@ -1,7 +1,6 @@
 import axios from "axios";
 
 const STORAGE_KEY = "unireserve_auth";
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000/api",
@@ -17,10 +16,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-function wait(milliseconds = 500) {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds));
-}
-
 function readSession() {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -30,21 +25,18 @@ function readSession() {
   }
 }
 
-function saveSession(user) {
-  const session = {
-    token: `mock-${Date.now()}`,
-    user,
-  };
+function saveSession(token, user) {
+  const session = { token, user };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
 }
 
-function nameFromEmail(email) {
-  return email
-    .split("@")[0]
-    .split(/[._-]/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ") || "UniReserve User";
+function apiError(error) {
+  return new Error(
+    error.response?.data?.message ||
+      (error.code === "ECONNABORTED"
+        ? "The server took too long to respond."
+        : "Unable to reach the server. Please try again.")
+  );
 }
 
 export function getStoredUser() {
@@ -52,80 +44,52 @@ export function getStoredUser() {
 }
 
 export async function loginUser({ email, password }) {
-  await wait();
-
-  if (!EMAIL_PATTERN.test(email)) {
-    throw new Error("Enter a valid university email address.");
+  try {
+    const response = await api.post("/auth/login", { email, password });
+    const { token, user } = response.data.data;
+    saveSession(token, user);
+    return user;
+  } catch (error) {
+    throw apiError(error);
   }
-  if (password.length < 6) {
-    throw new Error("Password must contain at least 6 characters.");
-  }
-
-  const existingUser = getStoredUser();
-  const user = existingUser?.email === email
-    ? existingUser
-    : {
-        id: `USR-${Date.now().toString().slice(-6)}`,
-        name: nameFromEmail(email),
-        email,
-        department: "General Studies",
-        role: "student",
-      };
-
-  saveSession(user);
-  return user;
 }
 
 export async function registerUser(details) {
-  await wait(650);
-
-  const { name, email, department, role, password, confirmPassword } = details;
-  if (!name.trim() || !department.trim()) {
-    throw new Error("Name and department are required.");
+  try {
+    const response = await api.post("/auth/register", details);
+    const { token, user } = response.data.data;
+    saveSession(token, user);
+    return user;
+  } catch (error) {
+    throw apiError(error);
   }
-  if (!EMAIL_PATTERN.test(email)) {
-    throw new Error("Enter a valid university email address.");
-  }
-  if (!["student", "faculty"].includes(role)) {
-    throw new Error("Choose either student or faculty.");
-  }
-  if (password.length < 6) {
-    throw new Error("Password must contain at least 6 characters.");
-  }
-  if (password !== confirmPassword) {
-    throw new Error("Passwords do not match.");
-  }
-
-  const user = {
-    id: `USR-${Date.now().toString().slice(-6)}`,
-    name: name.trim(),
-    email: email.trim().toLowerCase(),
-    department: department.trim(),
-    role,
-  };
-
-  saveSession(user);
-  return user;
 }
 
 export async function updateUserProfile({ name, department }) {
-  await wait();
-
-  const currentUser = getStoredUser();
-  if (!currentUser) {
-    throw new Error("Your session has expired. Please log in again.");
+  try {
+    const response = await api.put("/users/profile", { name, department });
+    const session = readSession();
+    const user = response.data.data.user;
+    saveSession(session.token, user);
+    return user;
+  } catch (error) {
+    throw apiError(error);
   }
-  if (!name.trim() || !department.trim()) {
-    throw new Error("Name and department are required.");
-  }
+}
 
-  const updatedUser = {
-    ...currentUser,
-    name: name.trim(),
-    department: department.trim(),
-  };
-  saveSession(updatedUser);
-  return updatedUser;
+export async function getCurrentUser() {
+  const session = readSession();
+  if (!session?.token) return null;
+
+  try {
+    const response = await api.get("/auth/me");
+    const user = response.data.data.user;
+    saveSession(session.token, user);
+    return user;
+  } catch (error) {
+    logoutUser();
+    throw apiError(error);
+  }
 }
 
 export function logoutUser() {

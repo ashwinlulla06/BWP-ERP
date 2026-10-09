@@ -47,7 +47,7 @@ function Login() {
             </p>
             <div className="portal-status">
               <span className="status-dot" aria-hidden="true" />
-              <span><strong>Portal available</strong><small>Mock authentication is ready</small></span>
+              <span><strong>Portal available</strong><small>Secure authentication is ready</small></span>
             </div>
           </div>
 
@@ -57,7 +57,7 @@ function Login() {
               <div>
                 <span className="eyebrow">Welcome back</span>
                 <h2>Log in to UniReserve</h2>
-                <p>Use any valid email and a password of at least 6 characters.</p>
+                <p>Use the email and password for your registered account.</p>
               </div>
             </div>
 
