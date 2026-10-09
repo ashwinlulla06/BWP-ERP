@@ -13,9 +13,11 @@ function httpError(message, status) {
   return err;
 }
  
+// Person 1 stores the session as JSON under "unireserve_auth": { token, user }.
 function readToken() {
   try {
-    return window.localStorage.getItem('token');
+    const session = JSON.parse(window.localStorage.getItem('unireserve_auth'));
+    return (session && session.token) || null;
   } catch (e) {
     return null;
   }
@@ -29,7 +31,7 @@ function request(method, path, body) {
     xhr.withCredentials = true; // send session cookie if Person 1 uses sessions
     xhr.timeout = 10000;
     xhr.setRequestHeader('Accept', 'application/json');
-    const token = readToken(); // or a JWT if Person 1 uses tokens
+    const token = readToken(); // same Bearer token Person 1's axios interceptor sends
     if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
     if (body !== undefined) xhr.setRequestHeader('Content-Type', 'application/json');
  
