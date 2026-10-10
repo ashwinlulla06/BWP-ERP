@@ -7,6 +7,8 @@ const { initializeDatabase } = require("./config/db");
 const authRoutes = require("./routes/auth.routes");
 const userRoutes = require("./routes/users.routes");
 const equipmentRoutes = require("./routes/equipment.routes");
+const adminRoutes = require("./routes/admin.routes");
+const booksRoutes = require("./routes/books.routes");
 
 const app = express();
 const port = Number(process.env.PORT) || 5000;
@@ -26,6 +28,11 @@ app.use(express.json({ limit: "100kb" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/equipment", equipmentRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/books", booksRoutes);
+
+const { setupSoap } = require("./utils/soapService");
+setupSoap(app);
 
 app.use((request, response) => {
   response.status(404).json({
@@ -54,9 +61,12 @@ app.use((error, request, response, next) => {
 
 initializeDatabase()
   .then(() => {
-    app.listen(port, () => {
+    const server = app.listen(port, () => {
       console.log(`UniReserve API listening on http://localhost:${port}`);
+      console.log(`SOAP endpoint available at http://localhost:${port}/wsdl?wsdl`);
     });
+    const { setupSoap } = require("./utils/soapService");
+    setupSoap(server);
   })
   .catch((error) => {
     console.error("Unable to initialize the database:", error);

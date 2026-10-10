@@ -68,3 +68,26 @@ INSERT INTO equipment (name, description, category, location, asset_tag, total_q
 SELECT name, description, category, location, asset_tag, total_qty
   FROM seed
  WHERE NOT EXISTS (SELECT 1 FROM equipment);
+
+CREATE TABLE IF NOT EXISTS books (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  author TEXT NOT NULL,
+  isbn TEXT UNIQUE NOT NULL,
+  status TEXT NOT NULL DEFAULT 'available'
+         CHECK (status IN ('available', 'reserved'))
+);
+
+CREATE TABLE IF NOT EXISTS book_reservations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  book_id INTEGER NOT NULL,
+  pickup_date TEXT NOT NULL
+              CHECK (pickup_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),
+  status TEXT NOT NULL DEFAULT 'pending'
+         CHECK (status IN ('pending', 'approved', 'rejected', 'cancelled')),
+  signature_hash TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
+  FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE RESTRICT
+);
