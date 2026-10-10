@@ -1,7 +1,6 @@
-const xsltProcess = require("xslt-processor").xmlParse;
-const xslt = require("xslt-processor").xsltProcess;
+const { XmlParser, Xslt } = require("xslt-processor");
 
-function generateReportHtml(reservations, type) {
+async function generateReportHtml(reservations, type) {
   let xmlString = '<?xml version="1.0" encoding="UTF-8"?>\n<Report>\n';
   xmlString += `  <Title>UniReserve Master Report - ${type}</Title>\n`;
   xmlString += `  <GeneratedOn>${new Date().toDateString()}</GeneratedOn>\n`;
@@ -58,9 +57,11 @@ function generateReportHtml(reservations, type) {
 </xsl:stylesheet>`;
 
   try {
-    const xmlDoc = xsltProcess(xmlString);
-    const xslDoc = xsltProcess(xslString);
-    return xslt(xmlDoc, xslDoc);
+    const xmlParser = new XmlParser();
+    const xslt = new Xslt();
+    const xmlDoc = xmlParser.xmlParse(xmlString);
+    const xslDoc = xmlParser.xmlParse(xslString);
+    return await xslt.xsltProcess(xmlDoc, xslDoc);
   } catch (error) {
     console.error("XSLT processing failed:", error);
     throw error;

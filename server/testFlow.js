@@ -32,7 +32,9 @@ function request(method, path, data, token) {
   const tokenAdmin = jwt.sign({}, process.env.JWT_SECRET, { algorithm: "HS256", expiresIn: "1d", subject: "2" }); // Het's ID
   
   // 1. Add a book first so we can reserve it
-  const bookRes = await request('POST', '/api/admin/books', { title: "Test Book", author: "Test", isbn: "12345" }, tokenAdmin);
+  const bookRes = await request('POST', '/api/admin/books', { title: "Test Book", author: "Test", isbn: "1234567890" }, tokenAdmin);
+  console.log("Book create status:", bookRes.status, bookRes.body);
+  if (!bookRes.body.data) return;
   const bookId = bookRes.body.data.id;
 
   console.log("1. Student creates a book reservation...");
@@ -42,6 +44,17 @@ function request(method, path, data, token) {
   console.log("2. Admin checks reservations...");
   const adminRes = await request('GET', '/api/admin/reservations', null, tokenAdmin);
   console.log("Admin reservations status:", adminRes.status);
-  console.log("Admin reservations:", adminRes.body.data);
+  
+  const reservation = adminRes.body.data.find(r => r.resource === "Test Book");
+  if (reservation) {
+    console.log("3. Admin approves the book reservation...");
+    const approveRes = await request('POST', `/api/admin/reservations/book/${reservation.id}/approve`, null, tokenAdmin);
+    console.log("Approve status:", approveRes.status, approveRes.body);
+
+    console.log("4. Verify status updated...");
+    const adminRes2 = await request('GET', '/api/admin/reservations', null, tokenAdmin);
+    const updated = adminRes2.body.data.find(r => r.id === reservation.id);
+    console.log("Updated reservation status:", updated.status);
+  }
 
 })();

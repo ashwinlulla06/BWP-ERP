@@ -284,7 +284,7 @@ router.get("/reports", async (req, res) => {
     reservations.sort((a, b) => a.date > b.date ? 1 : -1);
 
     const { generateReportHtml } = require("../utils/xsltReport");
-    const html = generateReportHtml(reservations, type || "All Bookings");
+    const html = await generateReportHtml(reservations, type || "All Bookings");
 
     return send(res, 200, { html }, "Report generated successfully.");
   } catch (error) {
