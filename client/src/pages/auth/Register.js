@@ -55,7 +55,7 @@ function Register() {
             <div>
               <span className="eyebrow">Join the campus portal</span>
               <h1>Create your UniReserve account</h1>
-              <p>Register as a student or faculty member to manage university resources.</p>
+              <p>Register as a student to access university resources.</p>
             </div>
             <span className="security-chip"><span className="status-dot" /> Secure registration</span>
           </div>
@@ -80,7 +80,6 @@ function Register() {
                 <label className="form-label" htmlFor="registerRole">Role</label>
                 <select className="form-select" id="registerRole" name="role" value={form.role} onChange={handleChange} required>
                   <option value="student">Student</option>
-                  <option value="faculty">Faculty</option>
                 </select>
                 <div className="form-text">Administrator accounts cannot be created here.</div>
               </div>

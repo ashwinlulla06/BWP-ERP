@@ -22,9 +22,15 @@ import EquipmentList from "./pages/equipment/EquipmentList";
 import BookEquipment from "./pages/equipment/BookEquipment";
 import MyBookings from "./pages/equipment/MyBookings";
 
+export function getDashboardRoute(user) {
+  if (!user) return "/login";
+  if (user.role === "admin" || user.role === "faculty") return "/admin/dashboard";
+  return "/equipment";
+}
+
 function HomeRedirect() {
   const { user } = useAuth();
-  return <Navigate to={user ? "/profile" : "/login"} replace />;
+  return <Navigate to={getDashboardRoute(user)} replace />;
 }
 
 function AppRoutes() {
@@ -43,29 +49,15 @@ function AppRoutes() {
 
           <Route element={<ProtectedRoute />}>
             <Route path="/profile" element={<Profile />} />
-
             <Route path="/equipment" element={<EquipmentList />} />
-            <Route
-              path="/equipment/:id/book"
-              element={<BookEquipment />}
-            />
-            <Route
-              path="/equipment/my-bookings"
-              element={<MyBookings />}
-            />
+            <Route path="/equipment/:id/book" element={<BookEquipment />} />
+            <Route path="/equipment/my-bookings" element={<MyBookings />} />
+          </Route>
 
-            <Route
-              path="/admin/dashboard"
-              element={<AdminDashboard />}
-            />
-            <Route
-              path="/admin/manage"
-              element={<AdminManage />}
-            />
-            <Route
-              path="/admin/reports"
-              element={<Reports />}
-            />
+          <Route element={<ProtectedRoute requiredRole="admin" />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/manage" element={<AdminManage />} />
+            <Route path="/admin/reports" element={<Reports />} />
           </Route>
 
           <Route path="*" element={<HomeRedirect />} />

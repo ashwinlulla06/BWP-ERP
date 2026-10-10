@@ -38,6 +38,11 @@ function Navbar() {
             {user ? (
               <>
                 <NavLink className="nav-link" to="/profile">Profile</NavLink>
+                {(user.role === 'admin' || user.role === 'faculty') && (
+                  <NavLink className="nav-link" to="/admin/dashboard">Admin Dashboard</NavLink>
+                )}
+                <NavLink className="nav-link" to="/equipment">Equipment & Books</NavLink>
+                <NavLink className="nav-link" to="/equipment/my-bookings">My Bookings</NavLink>
                 <span className="user-chip" title={user.email}>
                   <span className="avatar" aria-hidden="true">{user.name.charAt(0).toUpperCase()}</span>
                   <span>

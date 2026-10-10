@@ -5,7 +5,7 @@ import * as mock from './mockData';
 export const API_ROOT = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 // Mock data is ON by default until the backend is ready.
 // Set REACT_APP_USE_MOCK=false in client/.env to use the real API.
-export const USE_MOCK = process.env.REACT_APP_USE_MOCK !== 'false';
+export const USE_MOCK = process.env.REACT_APP_USE_MOCK === 'true';
  
 function httpError(message, status) {
   const err = new Error(message);
