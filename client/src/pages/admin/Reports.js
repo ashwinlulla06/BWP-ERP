@@ -24,6 +24,18 @@ const Reports = () => {
     }
   };
 
+  const handleDownload = () => {
+    const blob = new Blob([reportHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `UniReserve-Report-${reportType.replace(/\s+/g, '-')}-${fromDate}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <AdminLayout activeMenu="reports">
       <div className="page-content">
@@ -86,7 +98,7 @@ const Reports = () => {
             <>
               <div className="table-header">
                 <h2 className="table-title">Report Preview: {reportType} ({fromDate} to {toDate})</h2>
-                <button className="action-btn btn-reject" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button onClick={handleDownload} className="action-btn btn-reject" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span> Download HTML
                 </button>
               </div>

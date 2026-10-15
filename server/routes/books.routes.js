@@ -1,6 +1,7 @@
 const express = require("express");
 const { database, get, run } = require("../config/db");
 const authenticationRequired = require("../middleware/auth.middleware");
+const { generateSignature } = require("../utils/signature");
 
 const router = express.Router();
 
@@ -86,9 +87,11 @@ router.post("/reserve", async (req, res) => {
     }
 
     try {
+      const signature_hash = generateSignature({ user_id: userId, book_id: book_id, pickup_date });
+      
       const info = await run(
-        "INSERT INTO book_reservations (user_id, book_id, pickup_date) VALUES (?, ?, ?)",
-        [userId, book_id, pickup_date]
+        "INSERT INTO book_reservations (user_id, book_id, pickup_date, signature_hash) VALUES (?, ?, ?, ?)",
+        [userId, book_id, pickup_date, signature_hash]
       );
       ok(res, { id: info.id, status: "pending" }, 201);
     } catch (e) {

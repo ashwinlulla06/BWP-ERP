@@ -2,56 +2,51 @@ const fs = require("fs");
 const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
 
-const databasePath = path.resolve(
-  __dirname,
-  "..",
-  process.env.DB_PATH || "data/unireserve.db"
-);
+const dbPath = path.join(__dirname, "..", "data", "unireserve.db");
+const dbDir = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
 
-fs.mkdirSync(path.dirname(databasePath), { recursive: true });
+const database = new sqlite3.Database(dbPath);
 
-const database = new sqlite3.Database(databasePath);
+// Enable foreign key constraints
+database.run("PRAGMA foreign_keys = ON");
 
-function run(sql, parameters = []) {
+function run(sql, params = []) {
   return new Promise((resolve, reject) => {
-    database.run(sql, parameters, function handleResult(error) {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve({ id: this.lastID, changes: this.changes });
+    database.run(sql, params, function (err) {
+      if (err) reject(err);
+      else resolve({ id: this.lastID, changes: this.changes });
     });
   });
 }
 
-function get(sql, parameters = []) {
+function get(sql, params = []) {
   return new Promise((resolve, reject) => {
-    database.get(sql, parameters, (error, row) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve(row);
+    database.get(sql, params, (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
     });
   });
 }
 
-function execute(sql) {
+function all(sql, params = []) {
   return new Promise((resolve, reject) => {
-    database.exec(sql, (error) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve();
+    database.all(sql, params, (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
     });
   });
 }
 
-async function initializeDatabase() {
+function initializeDatabase() {
   const schemaPath = path.join(__dirname, "..", "models", "schema.sql");
   const schema = fs.readFileSync(schemaPath, "utf8");
-  await execute(schema);
+  return new Promise((resolve, reject) => {
+    database.exec(schema, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
 }
 
-module.exports = { database, get, initializeDatabase, run };
+module.exports = { database, get, run, all, initializeDatabase };

@@ -1,4 +1,7 @@
-const { XmlParser, Xslt } = require("xslt-processor");
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+const { execSync } = require("child_process");
 
 async function generateReportHtml(reservations, type) {
   let xmlString = '<?xml version="1.0" encoding="UTF-8"?>\n<Report>\n';
@@ -16,7 +19,6 @@ async function generateReportHtml(reservations, type) {
     xmlString += `      <Status>${r.status}</Status>\n`;
     xmlString += '    </Transaction>\n';
   }
-
   xmlString += '  </Transactions>\n</Report>';
 
   const xslString = `<?xml version="1.0" encoding="UTF-8"?>
@@ -27,7 +29,6 @@ async function generateReportHtml(reservations, type) {
         <h2><xsl:value-of select="Report/Title"/></h2>
         <p style="color: var(--text-muted)">Generated on: <xsl:value-of select="Report/GeneratedOn"/></p>
       </div>
-      
       <table style="width: 100%; border-collapse: collapse; border: 1px solid #E2E8F0;">
         <thead>
           <tr style="background-color: #F1F5F9;">
@@ -56,15 +57,29 @@ async function generateReportHtml(reservations, type) {
   </xsl:template>
 </xsl:stylesheet>`;
 
+  const tmpDir = os.tmpdir();
+  const xmlPath = path.join(tmpDir, `report-${Date.now()}.xml`);
+  const xslPath = path.join(tmpDir, `report-${Date.now()}.xsl`);
+
   try {
-    const xmlParser = new XmlParser();
-    const xslt = new Xslt();
-    const xmlDoc = xmlParser.xmlParse(xmlString);
-    const xslDoc = xmlParser.xmlParse(xslString);
-    return await xslt.xsltProcess(xmlDoc, xslDoc);
+    fs.writeFileSync(xmlPath, xmlString);
+    fs.writeFileSync(xslPath, xslString);
+
+    const htmlOutput = execSync(`xsltproc "${xslPath}" "${xmlPath}"`, { stdio: 'pipe' }).toString();
+    
+    fs.unlinkSync(xmlPath);
+    fs.unlinkSync(xslPath);
+
+    return htmlOutput;
   } catch (error) {
-    console.error("XSLT processing failed:", error);
-    throw error;
+    if (fs.existsSync(xmlPath)) fs.unlinkSync(xmlPath);
+    if (fs.existsSync(xslPath)) fs.unlinkSync(xslPath);
+    
+    console.warn("xsltproc failed.");
+    return `<div style="padding: 32px; color: #721c24; background-color: #f8d7da; border-radius: 8px;">
+      <h4>XSLT Processor Missing</h4>
+      <p>Windows users: Install <strong>xsltproc</strong> to render this report.</p>
+    </div>`;
   }
 }
 
