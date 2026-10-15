@@ -38,6 +38,8 @@ function Navbar() {
             {user ? (
               <>
                 <NavLink className="nav-link" to="/profile">Profile</NavLink>
+                <NavLink className="nav-link" to="/equipment" end>Equipment</NavLink>
+                <NavLink className="nav-link" to="/equipment/my-bookings">My Bookings</NavLink>
                 <NavLink className="nav-link" to="/books" end>Library Books</NavLink>
                 <NavLink className="nav-link" to="/books/my-reservations">My Reservations</NavLink>
                 <span className="user-chip" title={user.email}>
