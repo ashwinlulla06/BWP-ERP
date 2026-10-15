@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import './AdminLayout.css';
 
 const AdminLayout = ({ children, activeMenu }) => {
   const [search, setSearch] = useState('');
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <div className="admin-layout">
@@ -22,19 +31,26 @@ const AdminLayout = ({ children, activeMenu }) => {
         </div>
         
         <nav className="sidebar-nav">
-          <a href="/admin/dashboard" className={`nav-item ${activeMenu === 'dashboard' ? 'active' : ''}`}>
+          <NavLink to="/admin/dashboard" className={`nav-item ${activeMenu === 'dashboard' ? 'active' : ''}`}>
             <span className="material-symbols-outlined">dashboard</span> <span>Dashboard</span>
-          </a>
-          <a href="/admin/manage" className={`nav-item ${activeMenu === 'manage' ? 'active' : ''}`}>
+          </NavLink>
+          <NavLink to="/admin/manage" className={`nav-item ${activeMenu === 'manage' ? 'active' : ''}`}>
             <span className="material-symbols-outlined">settings</span> <span>Manage</span>
-          </a>
-          <a href="/admin/reports" className={`nav-item ${activeMenu === 'reports' ? 'active' : ''}`}>
+          </NavLink>
+          <NavLink to="/admin/reports" className={`nav-item ${activeMenu === 'reports' ? 'active' : ''}`}>
             <span className="material-symbols-outlined">summarize</span> <span>Reports</span>
-          </a>
+          </NavLink>
+          <div style={{ marginTop: '20px', marginBottom: '10px', paddingLeft: '24px', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Main Portal</div>
+          <NavLink to="/profile" className="nav-item">
+            <span className="material-symbols-outlined">person</span> <span>Profile</span>
+          </NavLink>
+          <NavLink to="/equipment" className="nav-item">
+            <span className="material-symbols-outlined">inventory_2</span> <span>Equipment & Books</span>
+          </NavLink>
         </nav>
 
         <div className="sidebar-footer">
-          <button className="logout-btn">
+          <button className="logout-btn" onClick={handleLogout}>
             <span className="material-symbols-outlined">logout</span> <span>Log Out</span>
           </button>
         </div>
@@ -65,11 +81,11 @@ const AdminLayout = ({ children, activeMenu }) => {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontWeight: 'bold', fontSize: '12px'
               }}>
-                SA
+                {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
               </div>
               <div className="profile-info">
-                <span className="profile-name">System Admin</span>
-                <span className="profile-role">ID: ADM-99120</span>
+                <span className="profile-name">{user?.name || 'Admin'}</span>
+                <span className="profile-role">ID: {user?.id ? `ADM-${user.id}` : 'ADM'}</span>
               </div>
             </div>
           </div>

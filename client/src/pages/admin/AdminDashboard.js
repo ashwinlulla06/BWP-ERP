@@ -1,54 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from './AdminLayout';
-
-const mockBookings = [
-  {
-    id: 'BKG-001',
-    user: 'Alex Morgan',
-    type: 'Equipment',
-    resource: 'Digital Oscilloscope 100MHz',
-    date: '2024-10-08',
-    time: '10:00 AM - 12:00 PM',
-    status: 'Pending',
-  },
-  {
-    id: 'BKG-002',
-    user: 'Sarah Jenkins',
-    type: 'Library Book',
-    resource: 'Introduction to Algorithms (4th Ed)',
-    date: '2024-10-07',
-    time: 'Pickup by 5:00 PM',
-    status: 'Approved',
-  },
-  {
-    id: 'BKG-003',
-    user: 'Michael Chang',
-    type: 'Equipment',
-    resource: 'Robotics Arena (Bench #2)',
-    date: '2024-10-09',
-    time: '02:00 PM - 04:00 PM',
-    status: 'Pending',
-  },
-  {
-    id: 'BKG-004',
-    user: 'Emily Chen',
-    type: 'Equipment',
-    resource: 'Cleanroom Station #4',
-    date: '2024-10-06',
-    time: '09:00 AM - 01:00 PM',
-    status: 'Rejected',
-  }
-];
+import { getReservations, updateReservation } from '../../services/api';
 
 const AdminDashboard = () => {
-  const [bookings, setBookings] = useState(mockBookings);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleApprove = (id) => {
-    setBookings(bookings.map(b => b.id === id ? { ...b, status: 'Approved' } : b));
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
+  const fetchBookings = async () => {
+    try {
+      setLoading(true);
+      const data = await getReservations();
+      setBookings(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleReject = (id) => {
-    setBookings(bookings.map(b => b.id === id ? { ...b, status: 'Rejected' } : b));
+  const handleApprove = async (id, type) => {
+    try {
+      const typeStr = type === 'Equipment' ? 'equipment' : 'book';
+      await updateReservation(typeStr, id, 'approve');
+      fetchBookings();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleReject = async (id, type) => {
+    try {
+      const typeStr = type === 'Equipment' ? 'equipment' : 'book';
+      await updateReservation(typeStr, id, 'reject');
+      fetchBookings();
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   return (
@@ -64,28 +56,28 @@ const AdminDashboard = () => {
             <div className="card-icon-wrapper">
               <span className="material-symbols-outlined">calendar_month</span>
             </div>
-            <div className="card-value">1,248</div>
+            <div className="card-value">{loading ? '-' : bookings.length}</div>
             <div className="card-label">Total Bookings</div>
           </div>
           <div className="summary-card">
             <div className="card-icon-wrapper" style={{ backgroundColor: '#FEF3C7', color: '#B45309' }}>
               <span className="material-symbols-outlined">pending_actions</span>
             </div>
-            <div className="card-value">24</div>
+            <div className="card-value">{loading ? '-' : bookings.filter(b => b.status === 'pending').length}</div>
             <div className="card-label">Pending Requests</div>
           </div>
           <div className="summary-card">
             <div className="card-icon-wrapper" style={{ backgroundColor: '#DCFCE7', color: '#15803D' }}>
               <span className="material-symbols-outlined">check_circle</span>
             </div>
-            <div className="card-value">1,180</div>
+            <div className="card-value">{loading ? '-' : bookings.filter(b => b.status === 'approved').length}</div>
             <div className="card-label">Approved Bookings</div>
           </div>
           <div className="summary-card">
             <div className="card-icon-wrapper" style={{ backgroundColor: '#FEE2E2', color: '#B91C1C' }}>
               <span className="material-symbols-outlined">cancel</span>
             </div>
-            <div className="card-value">44</div>
+            <div className="card-value">{loading ? '-' : bookings.filter(b => b.status === 'rejected').length}</div>
             <div className="card-label">Rejected Bookings</div>
           </div>
         </div>
@@ -108,12 +100,16 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {bookings.map((booking) => (
-                  <tr key={booking.id}>
-                    <td>
-                      <div style={{ fontWeight: 600 }}>{booking.user}</div>
-                      <div style={{ fontSize: '12px', color: '#64748B' }}>{booking.id}</div>
-                    </td>
+                {error ? (
+                  <tr><td colSpan="7" style={{textAlign: 'center', color: 'red', padding: '20px'}}>{error}</td></tr>
+                ) : bookings.length === 0 && !loading ? (
+                  <tr><td colSpan="7" style={{textAlign: 'center', padding: '20px'}}>No reservations found.</td></tr>
+                ) : bookings.map((booking) => (
+                    <tr key={`${booking.type}-${booking.id}`}>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{booking.user}</div>
+                        <div style={{ fontSize: '12px', color: '#64748B' }}>{booking.id}</div>
+                      </td>
                     <td>{booking.type}</td>
                     <td>{booking.resource}</td>
                     <td>{booking.date}</td>
@@ -124,23 +120,24 @@ const AdminDashboard = () => {
                       </span>
                     </td>
                     <td>
-                      {booking.status === 'Pending' ? (
+                      {booking.status === 'pending' ? (
                         <>
-                          <button className="action-btn btn-approve" onClick={() => handleApprove(booking.id)}>
+                          <button className="action-btn btn-approve" onClick={() => handleApprove(booking.id, booking.type)}>
                             Approve
                           </button>
-                          <button className="action-btn btn-reject" onClick={() => handleReject(booking.id)}>
+                          <button className="action-btn btn-reject" onClick={() => handleReject(booking.id, booking.type)}>
                             Reject
                           </button>
                         </>
                       ) : (
                         <span style={{ fontSize: '13px', color: '#64748B', fontWeight: 500 }}>
-                          {booking.status === 'Approved' ? 'Ready for pickup' : 'No action needed'}
+                          {booking.status === 'approved' ? 'Ready for pickup' : 'No action needed'}
                         </span>
                       )}
                     </td>
                   </tr>
-                ))}
+                  ))
+                }
               </tbody>
             </table>
           </div>

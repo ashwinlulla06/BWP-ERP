@@ -1,6 +1,6 @@
 const express = require("express");
  
-const { database, get, run } = require("../config/db");
+const { database, get, run, all } = require("../config/db");
 const authenticationRequired = require("../middleware/auth.middleware");
  
 const router = express.Router();
@@ -22,14 +22,7 @@ const BOOKING_WINDOW_DAYS = 14; // today + the next 13 days
 // ---- small helpers ---------------------------------------------------------
  
 // node-sqlite3 has no promise API for "all rows", so wrap it here.
-function all(sql, parameters = []) {
-  return new Promise((resolve, reject) => {
-    database.all(sql, parameters, (error, rows) => {
-      if (error) reject(error);
-      else resolve(rows);
-    });
-  });
-}
+// Removed custom `all` to use the one from config/db.js which supports better-sqlite3
  
 function send(response, status, data, message) {
   return response.status(status).json({ success: true, data, message });
@@ -175,11 +168,14 @@ router.post("/book", async (request, response) => {
     return fail(response, 409, "This equipment is currently out of service.");
   }
  
+  const { generateSignature } = require("../utils/signature");
+  const signature_hash = generateSignature({ user_id: request.auth.userId, equipment_id: equipmentId, date, time_slot: timeSlot });
+
   let result;
   try {
     result = await run(
-      `INSERT INTO equipment_bookings (user_id, equipment_id, date, time_slot, status)
-       SELECT ?, e.id, ?, ?, 'pending'
+      `INSERT INTO equipment_bookings (user_id, equipment_id, date, time_slot, status, signature_hash)
+       SELECT ?, e.id, ?, ?, 'pending', ?
          FROM equipment e
         WHERE e.id = ?
           AND (SELECT COUNT(*)
@@ -188,7 +184,7 @@ router.post("/book", async (request, response) => {
                   AND b.date = ?
                   AND b.time_slot = ?
                   AND b.status IN ('pending', 'approved')) < e.total_qty`,
-      [request.auth.userId, date, timeSlot, equipmentId, date, timeSlot]
+      [request.auth.userId, date, timeSlot, signature_hash, equipmentId, date, timeSlot]
     );
   } catch (error) {
     // The unique index stops one person holding two active bookings for a slot.

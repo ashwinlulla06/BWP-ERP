@@ -7,7 +7,7 @@ const authenticationRequired = require("../middleware/auth.middleware");
 
 const router = express.Router();
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PUBLIC_ROLES = new Set(["student", "faculty"]);
+const PUBLIC_ROLES = new Set(["student"]);
 const SAFE_USER_COLUMNS = "id, name, email, department, role, created_at, updated_at";
 
 function text(value) {
@@ -31,7 +31,7 @@ function validateRegistration(body) {
     return { error: "Enter a valid email address." };
   }
   if (!PUBLIC_ROLES.has(role)) {
-    return { error: "Role must be student or faculty." };
+    return { error: "Role must be student." };
   }
   if (password.length < 6) {
     return { error: "Password must contain at least 6 characters." };

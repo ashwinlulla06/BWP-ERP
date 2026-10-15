@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { getDashboardRoute } from "../../App";
 
 function Login() {
   const { user, login } = useAuth();
@@ -11,7 +12,7 @@ function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (user) {
-    return <Navigate to="/profile" replace />;
+    return <Navigate to={getDashboardRoute(user)} replace />;
   }
 
   const handleChange = ({ target }) => {
@@ -25,8 +26,8 @@ function Login() {
     setIsSubmitting(true);
 
     try {
-      await login({ email: form.email.trim().toLowerCase(), password: form.password });
-      navigate(location.state?.from || "/profile", { replace: true });
+      const authUser = await login({ email: form.email.trim().toLowerCase(), password: form.password });
+      navigate(location.state?.from || getDashboardRoute(authUser), { replace: true });
     } catch (loginError) {
       setError(loginError.message);
     } finally {

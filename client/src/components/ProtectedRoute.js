@@ -1,7 +1,8 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { getDashboardRoute } from "../App";
 
-function ProtectedRoute() {
+function ProtectedRoute({ requiredRole }) {
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
@@ -14,11 +15,19 @@ function ProtectedRoute() {
     );
   }
 
-  return user ? (
-    <Outlet />
-  ) : (
-    <Navigate to="/login" replace state={{ from: location.pathname }} />
-  );
+  if (!user) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+
+  if (requiredRole) {
+    if (requiredRole === "admin" && user.role === "faculty") {
+      // allow
+    } else if (user.role !== requiredRole) {
+      return <Navigate to={getDashboardRoute(user)} replace />;
+    }
+  }
+
+  return <Outlet />;
 }
 
 export default ProtectedRoute;
