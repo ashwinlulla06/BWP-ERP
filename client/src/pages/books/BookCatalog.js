@@ -7,13 +7,12 @@ import "./books.css";
 export default function BookCatalog() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const search = params.get("search") || ""; // kept in the URL so a search can be linked to
+  const search = params.get("search") || "";
 
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Search-as-you-type: wait 300ms after the last keystroke, then call the API.
   useEffect(() => {
     setLoading(true);
     const timer = setTimeout(() => {
@@ -26,7 +25,7 @@ export default function BookCatalog() {
         .catch((err) => setError(errorMessage(err, "Could not load books.")))
         .finally(() => setLoading(false));
     }, 300);
-    return () => clearTimeout(timer); // typing again cancels the pending call
+    return () => clearTimeout(timer);
   }, [search]);
 
   const onType = (e) => {
@@ -93,7 +92,14 @@ export default function BookCatalog() {
               <StatusBadge status={b.status} />
             </div>
             <div>
-              <div className="bk-code">ISBN {b.isbn}</div>
+              <div className="bk-code">
+                ISBN {b.isbn} 
+                {b.call_number && (
+                  <span style={{ marginLeft: "8px", borderLeft: "1px solid #ccc", paddingLeft: "8px" }}>
+                    Shelf: {b.call_number}
+                  </span>
+                )}
+              </div>
               <h3 className="bk-resource__title">{b.title}</h3>
               <p className="bk-muted">{b.author}</p>
             </div>

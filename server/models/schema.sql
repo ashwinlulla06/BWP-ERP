@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS books (
   title   TEXT NOT NULL,
   author  TEXT,
   isbn    TEXT UNIQUE,
+  call_number TEXT,
   status  TEXT NOT NULL DEFAULT 'available'
           CHECK (status IN ('available', 'reserved'))
 );
