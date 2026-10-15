@@ -38,6 +38,8 @@ function Navbar() {
             {user ? (
               <>
                 <NavLink className="nav-link" to="/profile">Profile</NavLink>
+                <NavLink className="nav-link" to="/books" end>Library Books</NavLink>
+                <NavLink className="nav-link" to="/books/my-reservations">My Reservations</NavLink>
                 <span className="user-chip" title={user.email}>
                   <span className="avatar" aria-hidden="true">{user.name.charAt(0).toUpperCase()}</span>
                   <span>
