@@ -1,11 +1,4 @@
-import {
-  BrowserRouter,
-  Navigate,
-  Route,
-  Routes,
-  useLocation,
-} from "react-router-dom";
-
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -21,6 +14,10 @@ import Reports from "./pages/admin/Reports";
 import EquipmentList from "./pages/equipment/EquipmentList";
 import BookEquipment from "./pages/equipment/BookEquipment";
 import MyBookings from "./pages/equipment/MyBookings";
+
+import BookCatalog from "./pages/books/BookCatalog";
+import ReserveBook from "./pages/books/ReserveBook";
+import MyReservations from "./pages/books/MyReservations";
 
 export function getDashboardRoute(user) {
   if (!user) return "/login";
@@ -40,7 +37,6 @@ function AppRoutes() {
   return (
     <div className="app-shell">
       {!isAdminPage && <Navbar />}
-
       <main>
         <Routes>
           <Route path="/" element={<HomeRedirect />} />
@@ -52,6 +48,10 @@ function AppRoutes() {
             <Route path="/equipment" element={<EquipmentList />} />
             <Route path="/equipment/:id/book" element={<BookEquipment />} />
             <Route path="/equipment/my-bookings" element={<MyBookings />} />
+            
+            <Route path="/books" element={<BookCatalog />} />
+            <Route path="/books/:id/reserve" element={<ReserveBook />} />
+            <Route path="/books/my-reservations" element={<MyReservations />} />
           </Route>
 
           <Route element={<ProtectedRoute requiredRole="admin" />}>

@@ -1,5 +1,4 @@
 require("dotenv").config();
-
 const cors = require("cors");
 const express = require("express");
 
@@ -18,11 +17,7 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
   process.exit(1);
 }
 
-app.use(
-  cors({
-    origin: process.env.CLIENT_ORIGIN || "http://localhost:3000",
-  })
-);
+app.use(cors({ origin: process.env.CLIENT_ORIGIN || "http://localhost:3000" }));
 app.use(express.json({ limit: "100kb" }));
 
 app.use("/api/auth", authRoutes);
@@ -30,9 +25,6 @@ app.use("/api/users", userRoutes);
 app.use("/api/equipment", equipmentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/books", booksRoutes);
-
-const { setupSoap } = require("./utils/soapService");
-setupSoap(app);
 
 app.use((request, response) => {
   response.status(404).json({
@@ -72,3 +64,5 @@ initializeDatabase()
     console.error("Unable to initialize the database:", error);
     process.exit(1);
   });
+
+

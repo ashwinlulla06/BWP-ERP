@@ -1,63 +1,152 @@
 const express = require("express");
-const { database, get, all, run } = require("../config/db");
+const { get, run, all } = require("../config/db");
 const authenticationRequired = require("../middleware/auth.middleware");
+const { generateSignature } = require("../utils/signature");
 
 const router = express.Router();
 
-function send(response, status, data, message) {
-  return response.status(status).json({ success: true, data, message });
-}
+// Every books endpoint needs a logged-in user. The middleware verifies the
+// Bearer token and sets request.auth.userId, so the client never sends a user id.
+router.use(authenticationRequired);
 
-function fail(response, status, message) {
-  return response.status(status).json({ success: false, data: null, message });
-}
+// Same response shape as the rest of the API: { success, data, message }
+const ok = (res, data, status = 200) => res.status(status).json({ success: true, data });
+const fail = (res, status, message) =>
+  res.status(status).json({ success: false, data: null, message });
 
-function parseId(value) {
-  return /^\d+$/.test(String(value)) && Number(value) > 0 ? Number(value) : null;
-}
+const isValidDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(new Date(s));
 
-// ---- GET /api/books ----------------------------------------------------
 
+// Search books (returns everything when no search term)
 router.get("/", async (req, res) => {
   try {
-    const rows = await all("SELECT id, title, author, isbn, status FROM books ORDER BY title");
-    return send(res, 200, rows, "Books loaded.");
-  } catch (error) {
-    console.error("GET /books error:", error);
-    return fail(res, 500, "Error loading books.");
+    const q = `%${req.query.search || ""}%`;
+    const rows = await all(
+      "SELECT * FROM books WHERE title LIKE ? OR author LIKE ? ORDER BY title",
+      [q, q]
+    );
+    ok(res, rows);
+  } catch (e) {
+    fail(res, 500, "Could not load books.");
   }
 });
 
-// Require authentication for reservations
-router.use(authenticationRequired);
-
-// ---- POST /api/books/reserve -------------------------------------------
-
-router.post("/reserve", async (req, res) => {
-  const { book_id, pickup_date } = req.body;
-  const bookId = parseId(book_id);
-
-  if (!bookId) return fail(res, 400, "book_id is required.");
-  if (!pickup_date || !/^\d{4}-\d{2}-\d{2}$/.test(pickup_date)) {
-    return fail(res, 400, "pickup_date must be a valid YYYY-MM-DD.");
-  }
-
-  const book = await get("SELECT id, status FROM books WHERE id = ?", [bookId]);
-  if (!book) return fail(res, 404, "Book not found.");
-  if (book.status !== "available") return fail(res, 409, "Book is currently reserved or not available.");
-
-  const { generateSignature } = require("../utils/signature");
-  const signature_hash = generateSignature({ user_id: req.auth.userId, book_id: bookId, pickup_date });
-
+// This user's reservations (for the My Reservations page)
+router.get("/reservations", async (req, res) => {
   try {
-    const result = await run(
-      "INSERT INTO book_reservations (user_id, book_id, pickup_date, status, signature_hash) VALUES (?, ?, ?, 'pending', ?)",
-      [req.auth.userId, bookId, pickup_date, signature_hash]
+    const rows = await all(
+      `SELECT r.id, r.pickup_date, r.status, b.title, b.author
+       FROM book_reservations r
+       JOIN books b ON b.id = r.book_id
+       WHERE r.user_id = ?
+       ORDER BY r.id DESC`,
+      [req.auth.userId]
     );
-    return send(res, 201, { id: result.id, signature: signature_hash }, "Book reservation requested.");
-  } catch (error) {
-    console.error("POST /books/reserve error:", error);
-    return fail(res, 500, "Error creating reservation.");
+    ok(res, rows);
+  } catch (e) {
+    fail(res, 500, "Could not load reservations.");
+  }
+});
+
+// Reserve a book
+router.post("/reserve", async (req, res) => {
+  try {
+    const userId = req.auth.userId;
+    const { book_id, pickup_date } = req.body || {};
+
+    if (!Number.isInteger(Number(book_id)) || !pickup_date) {
+      return fail(res, 400, "book_id and pickup_date are required.");
+    }
+    if (!isValidDate(pickup_date)) {
+      return fail(res, 400, "pickup_date must be in YYYY-MM-DD format.");
+    }
+    if (pickup_date < new Date().toISOString().slice(0, 10)) {
+      return fail(res, 400, "Pickup date cannot be in the past.");
+    }
+    if (!(await get("SELECT id FROM users WHERE id = ?", [userId]))) {
+      return fail(res, 401, "Your account no longer exists.");
+    }
+
+    // Check if user already holds an active reservation for this book
+    const existing = await get(
+      "SELECT id FROM book_reservations WHERE user_id = ? AND book_id = ? AND status IN ('pending', 'approved')",
+      [userId, book_id]
+    );
+    if (existing) {
+      return fail(res, 409, "You already have an active reservation for this book.");
+    }
+
+    // Atomic claim: this single UPDATE only succeeds for ONE request, even if
+    // several arrive at the same moment.
+    const claim = await run(
+      "UPDATE books SET status = 'reserved' WHERE id = ? AND status = 'available'",
+      [book_id]
+    );
+    if (claim.changes === 0) {
+      const exists = await get("SELECT id FROM books WHERE id = ?", [book_id]);
+      return exists
+        ? fail(res, 409, "This book is already reserved.")
+        : fail(res, 404, "Book not found.");
+    }
+
+    try {
+      const signature_hash = generateSignature({ user_id: userId, book_id: book_id, pickup_date });
+      
+      const info = await run(
+        "INSERT INTO book_reservations (user_id, book_id, pickup_date, signature_hash) VALUES (?, ?, ?, ?)",
+        [userId, book_id, pickup_date, signature_hash]
+      );
+      ok(res, { id: info.id, status: "pending" }, 201);
+    } catch (e) {
+      // Insert failed after we claimed the book: release it again if no other reservation holds it.
+      await run(
+        `UPDATE books 
+            SET status = 'available' 
+          WHERE id = ? 
+            AND NOT EXISTS (
+              SELECT 1 FROM book_reservations 
+               WHERE book_id = ? AND status IN ('pending', 'approved')
+            )`,
+        [book_id, book_id]
+      );
+      throw e;
+    }
+  } catch (e) {
+    fail(res, 500, "Could not create the reservation.");
+  }
+});
+
+// Cancel a reservation (keeps the row as history, frees the book)
+router.delete("/reservation/:id", async (req, res) => {
+  try {
+    const r = await get("SELECT * FROM book_reservations WHERE id = ? AND user_id = ?", [
+      req.params.id,
+      req.auth.userId,
+    ]);
+    if (!r) return fail(res, 404, "Reservation not found.");
+    if (!["pending", "approved"].includes(r.status)) {
+      return fail(res, 409, `This reservation is already ${r.status}.`);
+    }
+
+    const upd = await run(
+      "UPDATE book_reservations SET status = 'cancelled' WHERE id = ? AND status IN ('pending','approved')",
+      [r.id]
+    );
+    if (upd.changes === 0) return fail(res, 409, "This reservation was already changed.");
+
+    await run(
+      `UPDATE books 
+          SET status = 'available' 
+        WHERE id = ? 
+          AND NOT EXISTS (
+            SELECT 1 FROM book_reservations 
+             WHERE book_id = ? AND status IN ('pending', 'approved')
+          )`,
+      [r.book_id, r.book_id]
+    );
+    ok(res, { cancelled: true });
+  } catch (e) {
+    fail(res, 500, "Could not cancel the reservation.");
   }
 });
 

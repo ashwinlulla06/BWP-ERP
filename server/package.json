@@ -10,6 +10,7 @@
     "db:init": "node scripts/initDB.js"
   },
   "dependencies": {
+    "@xmldom/xmldom": "^0.8.10",
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^13.0.3",
     "cors": "^2.8.5",
@@ -17,6 +18,7 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "libxslt": "^0.10.2",
+    "sax": "^1.6.1",
     "soap": "^1.13.3",
     "xslt-processor": "^5.1.2"
   },
@@ -26,3 +28,4 @@
     "node1-libxmljsmt-myh": "true"
   }
 }
+

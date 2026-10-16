@@ -96,6 +96,9 @@ router.post("/reservations/:type/:id/:action", async (req, res) => {
       if (result.changes === 0) return fail(res, 400, "Booking not found or already processed.");
       return send(res, 200, { id: resourceId, status: newStatus }, "Equipment booking updated.");
     } else if (type === 'book') {
+      const r = await get("SELECT book_id FROM book_reservations WHERE id = ? AND status = 'pending'", [resourceId]);
+      if (!r) return fail(res, 400, "Reservation not found or already processed.");
+
       const result = await run(
         "UPDATE book_reservations SET status = ? WHERE id = ? AND status = 'pending'",
         [newStatus, resourceId]
@@ -103,8 +106,18 @@ router.post("/reservations/:type/:id/:action", async (req, res) => {
       if (result.changes === 0) return fail(res, 400, "Reservation not found or already processed.");
       
       if (action === 'approve') {
-        const r = await get("SELECT book_id FROM book_reservations WHERE id = ?", [resourceId]);
         await run("UPDATE books SET status = 'reserved' WHERE id = ?", [r.book_id]);
+      } else if (action === 'reject') {
+        await run(
+          `UPDATE books 
+              SET status = 'available' 
+            WHERE id = ? 
+              AND NOT EXISTS (
+                SELECT 1 FROM book_reservations 
+                 WHERE book_id = ? AND status IN ('pending', 'approved')
+              )`,
+          [r.book_id, r.book_id]
+        );
       }
       
       return send(res, 200, { id: resourceId, status: newStatus }, "Book reservation updated.");

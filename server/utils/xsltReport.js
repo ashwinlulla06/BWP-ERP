@@ -16,7 +16,6 @@ async function generateReportHtml(reservations, type) {
     xmlString += `      <Status>${r.status}</Status>\n`;
     xmlString += '    </Transaction>\n';
   }
-
   xmlString += '  </Transactions>\n</Report>';
 
   const xslString = `<?xml version="1.0" encoding="UTF-8"?>
@@ -27,7 +26,6 @@ async function generateReportHtml(reservations, type) {
         <h2><xsl:value-of select="Report/Title"/></h2>
         <p style="color: var(--text-muted)">Generated on: <xsl:value-of select="Report/GeneratedOn"/></p>
       </div>
-      
       <table style="width: 100%; border-collapse: collapse; border: 1px solid #E2E8F0;">
         <thead>
           <tr style="background-color: #F1F5F9;">
@@ -69,3 +67,4 @@ async function generateReportHtml(reservations, type) {
 }
 
 module.exports = { generateReportHtml };
+

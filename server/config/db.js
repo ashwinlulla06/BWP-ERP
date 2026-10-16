@@ -69,7 +69,21 @@ async function initializeDatabase() {
   const schemaPath = path.join(__dirname, "..", "models", "schema.sql");
   const schema = fs.readFileSync(schemaPath, "utf8");
   await execute(schema);
+
+  // Idempotent migration: ensure call_number column exists in books table
+  try {
+    const columns = database.pragma("table_info(books)");
+    const hasCallNumber = columns.some((col) => col.name === "call_number");
+    if (!hasCallNumber) {
+      database.exec("ALTER TABLE books ADD COLUMN call_number TEXT");
+      console.log("Migration: Added call_number column to books table.");
+    }
+  } catch (migrationError) {
+    console.error("Migration check for call_number failed:", migrationError);
+  }
+
   console.log("Database initialized from schema.");
 }
 
-module.exports = { database, get, all, initializeDatabase, run };
+module.exports = { database, get, all, run, execute, initializeDatabase };
+
